@@ -12,14 +12,14 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 INST0  "INV"
 %%
 
-[ \t]*                      { ; }
+[ \t]*          { ; }
 {NL}		{ return NL;}
-
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
-[0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
 
+[0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
 [a-z_]+		{ strcpy(yylval.name,(yytext)); return IDENTIFIER;}
+
 
 "NEVR"		{ yylval.value = 0; return CND3;}
 "IFNC"		{ yylval.value = 1; return CND3;}
@@ -76,6 +76,7 @@ INST0  "INV"
 ".DW"		{ return DW;}
 ".EQU"		{ return EQU;}
 ".FWD"		{ return FWD;}
+
 
 %%
 

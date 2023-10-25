@@ -7,6 +7,7 @@
     void yyerror(const char *s);
     int yylex();
     int yywrap();
+
     struct symbole* mksym(char *name, int value, char initialized);
     struct symbole *table_sym = NULL;
     struct symbole {
@@ -17,19 +18,26 @@
     	int count;
 	struct symbole *next;
     };
-	
+
+   struct immediate* mkimm(char *name, int value);
+   struct immediate {
+	char *name;
+	int value;
+   };
 
 %}
 
 %union {
 	char name[20];
 	int value;
+	struct immediate *imm;
 }
 
 %token <value> 	NUMBER CND3 CND4 REG INST9 INST8 INST4 INST0 INST_PF
 %token 		DOLLAR COLON ORG END DW EQU  FWD NL 
 %token <name> 	IDENTIFIER
 %type  <value>	NUMBER_
+%type  <imm>	IMM
 
 %%
 
@@ -42,17 +50,22 @@ PRG : %empty
      | PRG ORG NUMBER NL	{ LINE++; PC = $3;} 
      ;
 
-INST_V : INST9 NUMBER_ REG 	{ printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2, $3); }
+INST_V : INST9 IMM REG 		{ 
+		if ($2->name == NULL) {
+		printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2->value, $3); 
+		} else {
+		printf("INST9 NUMBER REG,  %X, (%s),%X\n", $1, $2->name, $3); 
+		} }
 
-     | INST8 NUMBER_ REG 	{ printf("INST8 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }// Ambigu 
+     | INST8 IMM REG 		{ printf("INST8 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }// Ambigu 
      | INST8 REG REG     	{ printf("INST8 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST8 NUMBER_ REG CND3 	{ printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST8 IMM REG CND3 	{ printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG CND3 	{ printf("INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG CND4 	{ printf("INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
-     | INST4 NUMBER_ REG     	{ printf("INST4 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }
+     | INST4 IMM REG     	{ printf("INST4 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }
      | INST4 REG REG     	{ printf("INST4 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST4 NUMBER_ REG CND3 	{ printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST4 IMM REG CND3 	{ printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG CND3 	{ printf("INST4 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG CND4 	{ printf("INST4 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
@@ -64,6 +77,10 @@ INST_V : INST9 NUMBER_ REG 	{ printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2, $
 SYMB_V : IDENTIFIER COLON	{ mksym($1, PC, 1);}
      | EQU IDENTIFIER NUMBER_ 	{ mksym($2, $3, 1);}
      | FWD IDENTIFIER 		{ mksym($2, 0,  0);}
+     ;
+
+IMM : IDENTIFIER		{ $$ = mkimm( $1, 0);}
+     | NUMBER_			{ $$ = mkimm( NULL, $1);}
      ;
 
 NUMBER_ : DOLLAR		{ $$ = PC;}
@@ -91,6 +108,20 @@ int main(){
 
     return 0;
 
+}
+
+struct immediate* mkimm(char *name, int value) {
+	struct immediate *newimm = (struct immediate *)malloc(sizeof(struct immediate));
+
+	if (name == NULL) {
+		newimm->name = NULL;
+	} else {
+		char *newstr = (char *)malloc(strlen(name)+1);
+		strcpy(newstr, name);
+		newimm->name = newstr;
+	}
+	newimm->value = value;
+	return (newimm);
 }
 
 struct symbole* mksym(char *name, int value, char initialized) {

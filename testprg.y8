@@ -1,6 +1,8 @@
 .ORG 0
 .EQU titi 1
 IN 67 D1
+IN titi D1
+IN toutou D1
 .DW 5
 .DW	1
 
