@@ -1,0 +1,20 @@
+.ORG 0
+.EQU titi 1
+IN 67 D1
+.DW 5
+.DW	1
+
+.EQU toto 3
+.EQU tata 4
+.ORG 5
+SA  R1 A1
+RO 3  D2 NEVR
+.EQU tata 5
+.FWD roro
+.EQU end_ $
+jump_:
+.END
+
+
+LICENCE
+AZERADSFQ
