@@ -1,8 +1,14 @@
 %{  
     #include <stdio.h>
-    #include<string.h>
+    #include <string.h>
+    #include "instruction_nodes.h"
+    #include "instruction_factory.h"
     int PC = 0;
     int LINE = 1;
+
+    void push_inst(struct instruction *newinst);
+    struct instruction* table_instructions = NULL;
+    struct instruction* last_instruction = NULL;
 
     void yyerror(const char *s);
     int yylex();
@@ -19,11 +25,6 @@
 	struct symbole *next;
     };
 
-   struct immediate* mkimm(char *name, int value);
-   struct immediate {
-	char *name;
-	int value;
-   };
 
 %}
 
@@ -47,25 +48,37 @@ PRG : %empty
      | PRG NL 			{ LINE++; } 
      | PRG SYMB_V NL		{ LINE++; } 
      | PRG INST_V NL 		{ LINE++; PC++;}
-     | PRG ORG NUMBER NL	{ LINE++; PC = $3;} 
+     | PRG ORG NUMBER NL	{ 
+	PC = $3; 
+	push_inst(mkinst_label(NULL, PC, LINE));
+	LINE++;} 
      ;
 
 INST_V : INST9 IMM REG 		{ 
-		if ($2->name == NULL) {
+	push_inst(mkinst_imm($1, $2, 9, $3, 0, PC, LINE)); 
+	if ($2->name == NULL) {
 		printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2->value, $3); 
-		} else {
+	} else {
 		printf("INST9 NUMBER REG,  %X, (%s),%X\n", $1, $2->name, $3); 
-		} }
+	} }
 
-     | INST8 IMM REG 		{ printf("INST8 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }// Ambigu 
+     | INST8 IMM REG 		{ 
+	push_inst(mkinst_imm($1, $2, 8, $3, 0, PC, LINE));
+	printf("INST8 NUMBER REG, %X, %X, %X\n", $1, $2, $3); } 
+     | INST8 IMM REG CND3 	{ 
+	push_inst(mkinst_imm($1, $2, 8, $3, $4, PC, LINE));
+	printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG     	{ printf("INST8 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST8 IMM REG CND3 	{ printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG CND3 	{ printf("INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG CND4 	{ printf("INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
-     | INST4 IMM REG     	{ printf("INST4 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }
+     | INST4 IMM REG     	{ 
+	push_inst(mkinst_imm($1, $2, 4, $3, 0, PC, LINE));
+	printf("INST4 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }
+     | INST4 IMM REG CND3 	{ 
+	push_inst(mkinst_imm($1, $2, 4, $3, $4, PC, LINE));
+	printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG     	{ printf("INST4 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST4 IMM REG CND3 	{ printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG CND3 	{ printf("INST4 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG CND4 	{ printf("INST4 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
@@ -74,7 +87,9 @@ INST_V : INST9 IMM REG 		{
      | DW NUMBER_		{printf("DW : %X \n",$2);}
      ;
 
-SYMB_V : IDENTIFIER COLON	{ mksym($1, PC, 1);}
+SYMB_V : IDENTIFIER COLON	{ 
+	push_inst(mkinst_label($1, PC, LINE));
+	mksym($1, PC, 1);}
      | EQU IDENTIFIER NUMBER_ 	{ mksym($2, $3, 1);}
      | FWD IDENTIFIER 		{ mksym($2, 0,  0);}
      ;
@@ -110,20 +125,6 @@ int main(){
 
 }
 
-struct immediate* mkimm(char *name, int value) {
-	struct immediate *newimm = (struct immediate *)malloc(sizeof(struct immediate));
-
-	if (name == NULL) {
-		newimm->name = NULL;
-	} else {
-		char *newstr = (char *)malloc(strlen(name)+1);
-		strcpy(newstr, name);
-		newimm->name = newstr;
-	}
-	newimm->value = value;
-	return (newimm);
-}
-
 struct symbole* mksym(char *name, int value, char initialized) {
 	struct symbole *newsym = (struct symbole *)malloc(sizeof(struct symbole));
 	char *newstr = (char *)malloc(strlen(name)+1);
@@ -155,6 +156,11 @@ struct symbole* mksym(char *name, int value, char initialized) {
 		lastsym->next = newsym;
 	}
 	return (newsym);
+}
+
+void push_inst( struct instruction* newinst){
+	newinst->next = last_instruction;
+	last_instruction = newinst; 
 }
 
 void yyerror(const char* msg) {

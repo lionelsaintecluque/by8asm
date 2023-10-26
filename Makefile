@@ -1,5 +1,5 @@
-y8asm: y8.lex.c y8.tab.c
-	/usr/local/Cellar/gcc/13.2.0/bin/gcc-13 -o y8asm y8.lex.c y8.tab.c
+y8asm: y8.lex.c y8.tab.c instruction_nodes.c 
+	/usr/local/Cellar/gcc/13.2.0/bin/gcc-13 -o y8asm y8.lex.c y8.tab.c instruction_nodes.c 
         
 y8.lex.c: y8asm.l y8.tab.c
 	flex -o y8.lex.c y8asm.l
