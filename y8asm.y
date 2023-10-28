@@ -2,13 +2,12 @@
     #include <stdio.h>
     #include <string.h>
     #include "instruction_nodes.h"
-    #include "instruction_factory.h"
     int PC = 0;
     int LINE = 1;
 
     void push_inst(struct instruction *newinst);
-    struct instruction* table_instructions = NULL;
-    struct instruction* last_instruction = NULL;
+    struct instruction *table_instructions = NULL;
+    struct instruction *last_instruction = NULL;
 
     void yyerror(const char *s);
     int yylex();
@@ -24,8 +23,6 @@
     	int count;
 	struct symbole *next;
     };
-
-
 %}
 
 %union {
@@ -68,7 +65,9 @@ INST_V : INST9 IMM REG 		{
      | INST8 IMM REG CND3 	{ 
 	push_inst(mkinst_imm($1, $2, 8, $3, $4, PC, LINE));
 	printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
-     | INST8 REG REG     	{ printf("INST8 REG REG, %X, %X, %X\n", $1, $2, $3); }
+     | INST8 REG REG     	{ 
+	push_inst(mkinst_reg($1, $2, $3, 0, 3, PC, LINE));
+	printf("INST8 REG REG, %X, %X, %X\n", $1, $2, $3); }
      | INST8 REG REG CND3 	{ printf("INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG CND4 	{ printf("INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
@@ -78,13 +77,17 @@ INST_V : INST9 IMM REG 		{
      | INST4 IMM REG CND3 	{ 
 	push_inst(mkinst_imm($1, $2, 4, $3, $4, PC, LINE));
 	printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
-     | INST4 REG REG     	{ printf("INST4 REG REG, %X, %X, %X\n", $1, $2, $3); }
+     | INST4 REG REG     	{ 
+	push_inst(mkinst_reg($1, $2, $3, 0, 3, PC, LINE));
+	printf("INST4 REG REG, %X, %X, %X\n", $1, $2, $3); }
      | INST4 REG REG CND3 	{ printf("INST4 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG CND4 	{ printf("INST4 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
      | INST0 			{ printf("INST0, %X\n", $1); }
 
-     | DW NUMBER_		{printf("DW : %X \n",$2);}
+     | DW NUMBER_		{
+	push_inst(mkinst_dw($2, PC, LINE));
+	printf("DW : %X \n",$2);}
      ;
 
 SYMB_V : IDENTIFIER COLON	{ 
@@ -106,8 +109,17 @@ NUMBER_ : DOLLAR		{ $$ = PC;}
 
 
 int main(){
-   yyparse();
+    yyparse();
 
+
+    // Print the listing
+    printf( "Instruction Listing :\n" );
+
+    struct insturction *inst_i = table_instructions;
+    while ( inst_i != NULL ){
+        inst_i = print_instruction(inst_i);
+    }
+    // Print the Symbol Table
     printf( "Symbol Table :\n" );
 
     struct symbole *sym = table_sym;
@@ -159,7 +171,11 @@ struct symbole* mksym(char *name, int value, char initialized) {
 }
 
 void push_inst( struct instruction* newinst){
-	newinst->next = last_instruction;
+	if ( table_instructions == NULL ){
+		table_instructions = newinst;
+	}  else {
+		last_instruction->next = newinst;
+	}
 	last_instruction = newinst; 
 }
 
