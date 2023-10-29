@@ -13,6 +13,7 @@
     int yylex();
     int yywrap();
 
+
     struct symbole* mksym(char *name, int value, char initialized);
     struct symbole *table_sym = NULL;
     struct symbole {
@@ -23,6 +24,8 @@
     	int count;
 	struct symbole *next;
     };
+    void update_immediates(struct instruction *program, struct symbole *symbols);
+    int get_symbole (char *name, struct symbole *sym_table);
 %}
 
 %union {
@@ -111,11 +114,12 @@ NUMBER_ : DOLLAR		{ $$ = PC;}
 int main(){
     yyparse();
 
+    update_immediates(table_instructions, table_sym);
 
     // Print the listing
     printf( "Instruction Listing :\n" );
 
-    struct insturction *inst_i = table_instructions;
+    struct instruction *inst_i = table_instructions;
     while ( inst_i != NULL ){
         inst_i = print_instruction(inst_i);
     }
@@ -126,7 +130,7 @@ int main(){
     while ( sym != NULL) {
 	printf( "%s, line %d\t: ", sym->name , sym->line);
 	if ( sym->initialized ) {
-		printf( "%d\n", sym->value, sym->count );
+		printf( "%d (count : %d)\n", sym->value, sym->count );
 	} else {
 		printf( "not initialized\n" );
 	}
@@ -168,6 +172,34 @@ struct symbole* mksym(char *name, int value, char initialized) {
 		lastsym->next = newsym;
 	}
 	return (newsym);
+}
+
+int get_symbole (char *name, struct symbole *sym_table) {
+	if ( name != NULL ) {
+		struct symbole* sym_i = sym_table;
+		while (sym_i->next != NULL && 
+		       !strcmp(name, sym_i-> name) ) {
+			sym_i = sym_i->next;
+		}
+		if (sym_i != NULL) {
+			sym_i->count++;
+			return sym_i->value;
+		} else { 
+			printf("Symbol %s not found in Symbol Table\n", name);
+		}
+	}
+	printf ("Error : get_symbole called on undefined symbol name.\n");
+	
+}
+
+void update_immediates(struct instruction *program, struct symbole *symbols) {
+	struct instruction* inst_i = program;
+
+	while ( inst_i != NULL ){
+		if (inst_i->immediate != NULL)
+			inst_i->immediate->value = get_symbole(inst_i->immediate->name, symbols); 
+		inst_i = inst_i->next;
+	}
 }
 
 void push_inst( struct instruction* newinst){

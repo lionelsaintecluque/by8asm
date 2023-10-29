@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "instruction_nodes.h"
 
@@ -91,6 +92,22 @@ struct instruction* mkinst_dw(int dw, int pc, int line) {
 	return (newinst);
 }
 
+void imm_resolve(struct instruction* instruction) {
+
+	if ( instruction->immediate == NULL) {
+		return; // Silently returns...
+	} else {
+//		int value = get_immediate (instruction->immediate);
+//TODO : imm_size
+//		char size = instruction->imm_size;
+//		int limit = 2**size;
+//
+//		if (immediate >= limit) { printf ("Immediate 0x%X bigger than size (%d bits)", value, size);}
+//		
+//		instruction->opcode += (immediate & (limit-1)) << 3;
+	}
+	
+}
 
 
 /******************************************************************************/
@@ -106,7 +123,7 @@ struct instruction* print_instruction (struct instruction* instruction){
 		if (instruction->label != NULL) {
 			printf("\n0x%04X <%s>,\n", instruction->pc, instruction->label);
 		} else {
-			printf("\n0x%04X,\n", instruction->label, instruction->pc);
+			printf("\n0x%04X,\n", instruction->pc);
 		}
 	} else {
 		printf("0x%04X:\t0x%04X\tinstruction\n", instruction->pc, instruction->opcode);

@@ -14,6 +14,7 @@ struct instruction {
 	int line;
 	char type;
 	int pc;
+	char imm_resolved;
 	struct immediate *immediate;
 	struct instruction* next;
 };
