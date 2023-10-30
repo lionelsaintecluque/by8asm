@@ -182,6 +182,7 @@ int get_symbole (char *name, struct symbole *sym_table) {
 			sym_i = sym_i->next;
 		}
 		if (sym_i != NULL) {
+			printf ("For %s, found %d<%s>\n", name, sym_i->value, sym_i->name);
 			sym_i->count++;
 			return sym_i->value;
 		} else { 
@@ -196,8 +197,11 @@ void update_immediates(struct instruction *program, struct symbole *symbols) {
 	struct instruction* inst_i = program;
 
 	while ( inst_i != NULL ){
-		if (inst_i->immediate != NULL)
-			inst_i->immediate->value = get_symbole(inst_i->immediate->name, symbols); 
+		if (inst_i->immediate != NULL) {
+			if (inst_i->immediate->name != NULL)
+				inst_i->immediate->value = get_symbole(inst_i->immediate->name, symbols); 
+			add_immediate(inst_i);
+		}
 		inst_i = inst_i->next;
 	}
 }

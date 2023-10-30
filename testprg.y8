@@ -1,5 +1,5 @@
 .ORG 0
-.EQU titi 1
+.EQU titi 1036
 IN 67 D1
 IN 67 D2
 IN 67 R1
