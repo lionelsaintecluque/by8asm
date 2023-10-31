@@ -9,10 +9,9 @@ REG "D1"|"A1"|"D2"|"A2"|"R1"|"R2"|"R3"|"PC";
 INST9 "IN"|"OUT"
 INST8 "ADD"|"AND"|"ANDN"|"CALL"|"CMPS"|"CMPU"|"OR"|"SET"|"SUB"|"XOR"
 INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH" 
-INST0  "INV"
 %%
 
-[ \t]*          { ; }
+[ \t,]*          { ; }
 {NL}		{ return NL;}
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
@@ -21,22 +20,22 @@ INST0  "INV"
 [a-z_]+		{ strcpy(yylval.name,(yytext)); return IDENTIFIER;}
 
 
-"NEVR"		{ yylval.value = 0x0000; return CND3;}
-"IFNC"		{ yylval.value = 0x0100; return CND3;}
-"IFNS"		{ yylval.value = 0x0200; return CND3;}
-"IFNZ"		{ yylval.value = 0x0300; return CND3;}
-"ALWS"		{ yylval.value = 0x0400; return CND3;}
-"IFC"		{ yylval.value = 0x0500; return CND3;}
-"IFS"		{ yylval.value = 0x0600; return CND3;}
-"IFZ"		{ yylval.value = 0x0700; return CND3;}
-"B0Z"		{ yylval.value = 0x00F0; return CND4;}
-"B1Z"		{ yylval.value = 0x01F0; return CND4;}
-"B2Z"		{ yylval.value = 0x02F0; return CND4;}
-"B3Z"		{ yylval.value = 0x03F0; return CND4;}
-"B0NZ"		{ yylval.value = 0x04F0; return CND4;}
-"B1NZ"		{ yylval.value = 0x05F0; return CND4;}
-"B2NZ"		{ yylval.value = 0x06F0; return CND4;}
-"B3NZ"		{ yylval.value = 0x07F0; return CND4;}
+"NEVR"		{ yylval.value = 0x00; return CND3;}
+"IFNC"		{ yylval.value = 0x02; return CND3;}
+"IFNS"		{ yylval.value = 0x04; return CND3;}
+"IFNZ"		{ yylval.value = 0x06; return CND3;}
+"ALWS"		{ yylval.value = 0x08; return CND3;}
+"IFC"		{ yylval.value = 0x0A; return CND3;}
+"IFS"		{ yylval.value = 0x0C; return CND3;}
+"IFZ"		{ yylval.value = 0x0E; return CND3;}
+"IFN0"		{ yylval.value = 0x01; return CND4;}
+"IFN1"		{ yylval.value = 0x03; return CND4;}
+"IFN2"		{ yylval.value = 0x05; return CND4;}
+"IFN3"		{ yylval.value = 0x07; return CND4;}
+"IF0"		{ yylval.value = 0x09; return CND4;}
+"IF1"		{ yylval.value = 0x0B; return CND4;}
+"IF2"		{ yylval.value = 0x0D; return CND4;}
+"IF3"		{ yylval.value = 0x0F; return CND4;}
 
 "D1"		{ yylval.value = 0; return REG;}
 "A1"		{ yylval.value = 1; return REG;}
@@ -49,7 +48,6 @@ INST0  "INV"
 
 "IN"		{ yylval.value = 0xC000; return INST9;}
 "OUT"		{ yylval.value = 0xD000; return INST9;}
-"PF"		{ yylval.value = 0xE000; return INST_PF;}
 
 "OR"		{ yylval.value = 0x0000; return INST8;}
 "XOR"		{ yylval.value = 0x1000; return INST8;}
@@ -57,19 +55,20 @@ INST0  "INV"
 "ANDN"		{ yylval.value = 0x3000; return INST8;}
 "CMPU"		{ yylval.value = 0x4000; return INST8;}
 "CMPS"		{ yylval.value = 0x5000; return INST8;}
-"SUB"		{ yylval.value = 006000; return INST8;}
+"SUB"		{ yylval.value = 0x6000; return INST8;}
 "ADD"		{ yylval.value = 0x7000; return INST8;}
 "SET"		{ yylval.value = 0x8000; return INST8;}
 "CALL"		{ yylval.value = 0x9000; return INST8;}
 
 "SH" 		{ yylval.value = 0xA000; return INST4;}
-"SA"		{ yylval.value = 0xA0F0; return INST4;}
+"SA"		{ yylval.value = 0xA080; return INST4;}
 "RO"		{ yylval.value = 0xA100; return INST4;}
-"RC"		{ yylval.value = 0xA1F0; return INST4;}
-"LDCH"		{ yylval.value = 0xA200; return INST4;}
-"LDCL"		{ yylval.value = 0xA2F0; return INST4;}
+"RC"		{ yylval.value = 0xA180; return INST4;}
+"LDCL"		{ yylval.value = 0xA200; return INST4;}
+"LDCH"		{ yylval.value = 0xA280; return INST4;}
 
-"INV"		{ yylval.value = 0xF000; return INST0;}
+"PF"		{ yylval.value = 0xE000; return INST_PF;}
+"INV"		{ yylval.value = 0xF000; return INST_INV;}
 
 ".ORG"		{ return ORG;}
 ".END"		{ return END;}

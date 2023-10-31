@@ -34,7 +34,7 @@
 	struct immediate *imm;
 }
 
-%token <value> 	NUMBER CND3 CND4 REG INST9 INST8 INST4 INST0 INST_PF
+%token <value> 	NUMBER CND3 CND4 REG INST9 INST8 INST4 INST_INV INST_PF
 %token 		DOLLAR COLON ORG END DW EQU  FWD NL 
 %token <name> 	IDENTIFIER
 %type  <value>	NUMBER_
@@ -55,7 +55,7 @@ PRG : %empty
      ;
 
 INST_V : INST9 IMM REG 		{ 
-	push_inst(mkinst_imm($1, $2, 9, $3, 0, PC, LINE)); 
+	push_inst(mkinst_imm($1, $2, 9, $3, 8, PC, LINE)); 
 	if ($2->name == NULL) {
 		printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2->value, $3); 
 	} else {
@@ -63,30 +63,49 @@ INST_V : INST9 IMM REG 		{
 	} }
 
      | INST8 IMM REG 		{ 
-	push_inst(mkinst_imm($1, $2, 8, $3, 0, PC, LINE));
+	push_inst(mkinst_imm($1, $2, 8, $3, 8, PC, LINE));
 	printf("INST8 NUMBER REG, %X, %X, %X\n", $1, $2, $3); } 
      | INST8 IMM REG CND3 	{ 
-	push_inst(mkinst_imm($1, $2, 8, $3, $4, PC, LINE));
+	push_inst(mkinst_imm($1, $2, 4, $3, $4, PC, LINE));
 	printf("INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST8 REG REG     	{ 
-	push_inst(mkinst_reg($1, $2, $3, 0, 3, PC, LINE));
+	push_inst(mkinst_reg($1, $2, $3, 8, 3, PC, LINE));
 	printf("INST8 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST8 REG REG CND3 	{ printf("INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
-     | INST8 REG REG CND4 	{ printf("INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST8 REG REG CND3 	{ 
+	push_inst(mkinst_reg($1, $2, $3, $4, 3, PC, LINE));
+	printf("INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST8 REG REG CND4 	{ 
+	push_inst(mkinst_reg($1, $2, $3, $4, 4, PC, LINE));
+	printf("INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
      | INST4 IMM REG     	{ 
-	push_inst(mkinst_imm($1, $2, 4, $3, 0, PC, LINE));
+	push_inst(mkinst_imm($1, $2, 4, $3, 8, PC, LINE));
 	printf("INST4 NUMBER REG, %X, %X, %X\n", $1, $2, $3); }
      | INST4 IMM REG CND3 	{ 
 	push_inst(mkinst_imm($1, $2, 4, $3, $4, PC, LINE));
 	printf("INST4 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
      | INST4 REG REG     	{ 
-	push_inst(mkinst_reg($1, $2, $3, 0, 3, PC, LINE));
+	push_inst(mkinst_reg($1, $2, $3, 8, 3, PC, LINE));
 	printf("INST4 REG REG, %X, %X, %X\n", $1, $2, $3); }
-     | INST4 REG REG CND3 	{ printf("INST4 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
-     | INST4 REG REG CND4 	{ printf("INST4 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST4 REG REG CND3 	{ 
+	push_inst(mkinst_reg($1, $2, $3, $4, 3, PC, LINE));
+	printf("INST4 REG REG CND3, %X, %X, %X, %X\n", $1, $2, $3, $4); }
+     | INST4 REG REG CND4 	{ 
+	push_inst(mkinst_reg($1, $2, $3, $4, 4, PC, LINE));
+	printf("INST4 REG REG CND4, %X, %X, %X, %X\n", $1, $2, $3, $4); }
 
-     | INST0 			{ printf("INST0, %X\n", $1); }
+     | INST_INV 		{ 
+	push_inst(mkinst_reg($1, 0, 0, 0, 0, PC, LINE));
+	printf("Instruction INVALID, %X\n", $1); }
+     | INST_PF REG		{ 
+	push_inst(mkinst_reg($1, 0, $2, 8, 4, PC, LINE));
+	printf("INST PF REG , %X, %X\n", $1, $2); }
+     | INST_PF REG CND3		{ 
+	push_inst(mkinst_reg($1, 0, $2, $3, 3, PC, LINE));
+	printf("INST PF REG CND3, %X, %X, %X\n", $1, $2, $3); }
+     | INST_PF REG CND4		{ 
+	push_inst(mkinst_reg($1, 0, $2, $3, 4, PC, LINE));
+	printf("INST PF REG CND4, %X, %X, %X\n", $1, $2, $3); }
 
      | DW NUMBER_		{
 	push_inst(mkinst_dw($2, PC, LINE));
@@ -177,8 +196,8 @@ struct symbole* mksym(char *name, int value, char initialized) {
 int get_symbole (char *name, struct symbole *sym_table) {
 	if ( name != NULL ) {
 		struct symbole* sym_i = sym_table;
-		while (sym_i->next != NULL && 
-		       !strcmp(name, sym_i-> name) ) {
+		while (sym_i != NULL && 
+		       strcmp(name, sym_i-> name) ) {
 			sym_i = sym_i->next;
 		}
 		if (sym_i != NULL) {
@@ -190,6 +209,8 @@ int get_symbole (char *name, struct symbole *sym_table) {
 		}
 	}
 	printf ("Error : get_symbole called on undefined symbol name.\n");
+
+	return 0;
 	
 }
 

@@ -27,8 +27,8 @@ struct instruction* mkinst_dw(int dw, int pc, int line);
 
 struct instruction* print_instruction (struct instruction* instruction);
 
-enum instruction_type { IMM9_t, IMM8_t, IMM4_t, IMM0_t, CND_t, RESERVED_t };
-enum instruction_form {IMM_REG, IMM_REG_CND, REG_REG, REG_REG_CND, CND};
+enum instruction_type { IMM9_t, IMM8_t, IMM4_t, INSTPF_t, INSTINV_t, RESERVED_t };
+enum instruction_form {IMM_REG, IMM_REG_CND, REG_REG, REG_REG_CND, REG_CND, NO_ARGS};
 enum mnemonic_type {
 	OR_t	= 0x0000,
 	XOR_t	= 0x1000,
@@ -41,11 +41,11 @@ enum mnemonic_type {
 	SET_t	= 0x8000,
 	CALL_t	= 0x9000,
 	SH_t	= 0xA000,
-	SA_t	= 0xA0F0,
+	SA_t	= 0xA080,
 	RO_t	= 0xA100,
-	RC_t	= 0xA1F0,
+	RC_t	= 0xA180,
 	LDCL_t	= 0xA200,
-	LDCH_t	= 0xA2F0,
+	LDCH_t	= 0xA280,
 	IN_t	= 0xC000,
 	OUT_t	= 0xD000,
 	PF_t	= 0xE000,
@@ -53,22 +53,22 @@ enum mnemonic_type {
 	};
 enum REG_t { D1_t = 0, A1_t = 1, D2_t = 2, A2_t = 3, R1_t = 4, R2_t = 5, R3_t = 6, PC_t = 7 };
 enum CND_t {
-	NEVR	= 0x0000,
-	IFNC	= 0x0100,
-	IFNS	= 0x0200,
-	IFNZ	= 0x0300,
-	ALWS	= 0x0400,
-	IFC	= 0x0500,
-	IFS	= 0x0600,
-	IFZ	= 0x0700,
-	B0Z	= 0x00F0,
-	B1Z	= 0x01F0,
-	B2Z	= 0x02F0,
-	B3Z	= 0x03F0,
-	B0NZ	= 0x04F0,
-	B1NZ	= 0x05F0,
-	B2NZ	= 0x06F0,
-	B3NZ	= 0x07F0,
+	NEVR	= 0x00,
+	IFNC	= 0x02,
+	IFNS	= 0x03,
+	IFNZ	= 0x06,
+	ALWS	= 0x08,
+	IFC	= 0x0A,
+	IFS	= 0x0C,
+	IFZ	= 0x0E,
+	B0Z	= 0x01,
+	B1Z	= 0x03,
+	B2Z	= 0x05,
+	B3Z	= 0x07,
+	B0NZ	= 0x09,
+	B1NZ	= 0x0B,
+	B2NZ	= 0x0D,
+	B3NZ	= 0x0F,
 	};
 
 struct instruction_tuple {
