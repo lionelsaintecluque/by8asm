@@ -71,8 +71,8 @@ struct instruction* mkinst_reg(int instruction, int sri, int snd, int cnd, char 
 	}
 
 	if ( 
-		(instruction & 0xF000) != INV_t && 
-		(instruction & 0xF000) != PF_t 
+		(instruction & 0xF000) != INV_t 
+	   //&&	(instruction & 0xF000) != PF_t 
 	   ) {
 		opcode |= (sri & 0X0007 ) << 3;
 	}
@@ -201,7 +201,7 @@ struct instruction_tuple* mk_tuple(int opcode) {
 	// CND
 	if ( form == IMM_REG_CND ) {
 		cnd = (opcode & 0x0380) >> 6;
-	} else if ( form == REG_REG_CND ) {
+	} else if ( form == REG_REG_CND | form == REG_CND ) {
 		cnd = (opcode & 0x03C0) >> 6;
 	}
 
@@ -279,6 +279,7 @@ void print_tuple (struct instruction_tuple* tuple, struct immediate* imm){
 			printf("%s ", REG_l[tuple->snd]); 
 			if ( tuple->cnd == ALWS) break; 
 			printf("%s ", CND_l[tuple->cnd]); break;
+		case NO_ARGS : break; // Nothing to print
 		default : 
 			printf ("Unknown form "); 
 	}
