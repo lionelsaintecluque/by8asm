@@ -1,4 +1,5 @@
 %{
+    #include<stdio.h>
     #include "y8.tab.h"
 %}
 
@@ -15,9 +16,6 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 {NL}		{ return NL;}
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
-
-[0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
-[a-z_]+		{ strcpy(yylval.name,(yytext)); return IDENTIFIER;}
 
 
 "NEVR"		{ yylval.value = 0x00; return CND3;}
@@ -75,6 +73,21 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 ".DW"		{ return DW;}
 ".EQU"		{ return EQU;}
 ".FWD"		{ return FWD;}
+
+[0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
+[a-z_][a-z0-9_]*	{ 
+		char* str_i = yytext;
+		while (*str_i) {
+			*str_i = (*str_i >= 'a' && *str_i <= 'z') ? *str_i -= ('a' - 'A') : *str_i;
+        		str_i++;
+		}
+		if (strlen(yytext) > SYM_LEN ) {
+			printf ("Warning: IDENTIFIER length exceeds limit of %u caracters : %s (%u). Truncated :", SYM_LEN, yytext, strlen(yytext));
+			yytext[SYM_LEN] = 0;
+			printf ("%s\n", yytext);
+		}
+		strcpy(yylval.name,yytext); 
+		return IDENTIFIER;}
 
 
 %%

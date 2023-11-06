@@ -29,7 +29,10 @@
 %}
 
 %union {
-	char name[20];
+	/* Update y8asm.l when changing SYM_LEN*/
+	#define SYM_LEN 24
+	char name[SYM_LEN+1];
+	
 	int value;
 	struct immediate *imm;
 }
@@ -169,7 +172,7 @@ struct symbole* mksym(char *name, int value, char initialized) {
 
 	while (sym_i != NULL) {
 		if ( !strcmp(name, sym_i->name) ) {
-			printf ("Warning : symbol redefined : %s\n", name) ;
+			printf ("Warning: symbol redefined : %s\n", name) ;
 			sym_i->value = value;
 			return (sym_i);
 		}
