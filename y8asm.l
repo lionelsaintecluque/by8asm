@@ -4,10 +4,10 @@
     #include "y8.tab.h"
 %}
 
-NL [\n\r\l]
+NL "\r\n"|"\n"|"\r"
 CND3 "NEVR"|"IFNC"|"IFNS"|"IFNZ"|"ALWS"|"IFC"|"IFS"|"IFZ"
 CND4 "B0Z"|"B1Z"|"B2Z"|"B3Z"|"B0NZ"|"B1NZ"|"B2NZ"|"B3NZ"
-REG "D1"|"A1"|"D2"|"A2"|"R1"|"R2"|"R3"|"PC";
+REG "D1"|"A1"|"D2"|"A2"|"R1"|"R2"|"R3"|"PC"
 INST9 "IN"|"OUT"
 INST8 "ADD"|"AND"|"ANDN"|"CALL"|"CMPS"|"CMPU"|"OR"|"SET"|"SUB"|"XOR"
 INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH" 
