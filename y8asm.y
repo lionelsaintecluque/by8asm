@@ -152,7 +152,7 @@ int main(){
     while ( sym != NULL) {
 	printf( "%s, line %d\t: ", sym->name , sym->line);
 	if ( sym->initialized ) {
-		printf( "%d (count : %d)\n", sym->value, sym->count );
+		printf( "%d (%Xh), count : %d\n", sym->value, sym->value, sym->count );
 	} else {
 		printf( "not initialized\n" );
 	}
@@ -172,7 +172,7 @@ struct symbole* mksym(char *name, int value, char initialized) {
 
 	while (sym_i != NULL) {
 		if ( !strcmp(name, sym_i->name) ) {
-			printf ("Warning: symbol redefined : %s\n", name) ;
+			printf ("Warning: symbol redefined : %s %Xh -> %Xh\n", name, sym_i->value, value) ;
 			sym_i->value = value;
 			return (sym_i);
 		}

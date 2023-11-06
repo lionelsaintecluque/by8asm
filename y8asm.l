@@ -1,5 +1,6 @@
 %{
     #include<stdio.h>
+    #include <limits.h>
     #include "y8.tab.h"
 %}
 
@@ -74,20 +75,61 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 ".EQU"		{ return EQU;}
 ".FWD"		{ return FWD;}
 
+[0-1]+"b"	{ char* str_i = yytext;
+		  int val = 0;
+		  int i = 0;
+		  while (*str_i) {
+			if (*str_i == 'b' || *str_i == 'B') break;
+
+			i = (*str_i >= '0' && *str_i <= '1') ? (*str_i - '0') : i;
+
+			if ( (val & (INT_MIN)) != 0 ) {
+				printf ("Number overflow : %s\n", yytext);
+			}
+
+        		str_i++;
+			val = (val<<1) | i;
+		  }	
+		  yylval.value = val;
+		  return NUMBER;}
+
+
+[0-9a-f]+"h"	{ char* str_i = yytext;
+		  int val = 0;
+		  int i = 0;
+		  while (*str_i) {
+			if (*str_i == 'h' || *str_i == 'H') break;
+
+			i = (*str_i >= '0' && *str_i <= '9') ? (*str_i - '0') : i;
+			i = (*str_i >= 'a' && *str_i <= 'f') ? 10 + (*str_i - 'a') : i;
+			i = (*str_i >= 'A' && *str_i <= 'F') ? 10 + (*str_i - 'A') : i;
+
+
+			if ( (val & (INT_MIN | INT_MIN >> 1 | INT_MIN >> 2 | INT_MIN >> 3)) != 0 ) {
+				printf ("Number overflow : %s\n", yytext);
+			}
+
+        		str_i++;
+			val = (val<<4) | i;
+		  }	
+		  yylval.value = val;
+		  return NUMBER;}
+
+
 [0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
-[a-z_][a-z0-9_]*	{ 
-		char* str_i = yytext;
-		while (*str_i) {
+
+[a-z_][a-z0-9_]* { char* str_i = yytext;
+		  while (*str_i) {
 			*str_i = (*str_i >= 'a' && *str_i <= 'z') ? *str_i -= ('a' - 'A') : *str_i;
         		str_i++;
-		}
-		if (strlen(yytext) > SYM_LEN ) {
+			}
+		  if (strlen(yytext) > SYM_LEN ) {
 			printf ("Warning: IDENTIFIER length exceeds limit of %u caracters : %s (%u). Truncated :", SYM_LEN, yytext, strlen(yytext));
 			yytext[SYM_LEN] = 0;
 			printf ("%s\n", yytext);
-		}
-		strcpy(yylval.name,yytext); 
-		return IDENTIFIER;}
+		  }
+		  strcpy(yylval.name,yytext); 
+		  return IDENTIFIER;}
 
 
 %%
