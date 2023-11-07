@@ -14,6 +14,7 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 %%
 
 [ \t,]*          { ; }
+";".*{NL}	{ return NL;}
 {NL}		{ return NL;}
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
