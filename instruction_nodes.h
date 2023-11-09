@@ -7,6 +7,8 @@ struct immediate {
 #define ORG_t 0
 #define INS_t 1
 #define DW_t 2
+#define BL_t 3
+#define BH_t 4
 struct instruction* mkinst_instr(int opcode, struct immediate* immediate, int pc, int line);
 struct instruction {
 	char *label;

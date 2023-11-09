@@ -141,7 +141,46 @@ int main(){
     // Print the listing
     printf( "Instruction Listing :\n" );
 
+    // Sort instructions based on PC address
+    struct instruction *current = table_instructions;
+    struct instruction *last = NULL;
+    while ( current != NULL ){
+	if (last != NULL && current->pc < last->pc) {
+		last->next = current->next;
+    		struct instruction *i = table_instructions;
+		while (i->next->pc <= current->pc) {
+			i = i->next;
+		}
+		current->next = i->next;
+		i->next = current;
+	} else last = current;
+	current = last->next;
+    }
+    last_instruction = last;
+
+    current = table_instructions;
+    last = NULL;
+    while ( current != NULL ){
+	if (current->next != NULL && current->pc == current->next->pc) {
+	//Si BL et BH les inverser 
+	//approuver la forme, sinon générer une erreur.
+		if (current->type != ORG_t && current->next->type != ORG_t) {
+			printf("Error : instruction at address %X redefined : \n", current->pc);
+        		print_instruction(current);
+        		print_instruction(current->next);
+		} else if (current->type != ORG_t) {
+			last = current;
+		} else if (last != NULL && last->pc == current->next->pc) {
+			printf("Error : instruction at address %X redefined : \n", current->pc);
+        		print_instruction(last);
+        		print_instruction(current->next);
+		}
+	}
+	current = current->next;
+    }
+
     struct instruction *inst_i = table_instructions;
+
     while ( inst_i != NULL ){
         inst_i = print_instruction(inst_i);
     }
