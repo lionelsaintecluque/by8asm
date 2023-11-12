@@ -1,0 +1,4 @@
+.EQU A_IMM Ah
+.EQU B_IMM Bh
+.EQU C_IMM ( A_IMM + B_IMM )
+.END
