@@ -38,7 +38,7 @@
 }
 
 %token <value> 	NUMBER CND3 CND4 REG INST9 INST8 INST4 INST_INV INST_PF
-%token 		DOLLAR COLON ORG END DW EQU  FWD NL 
+%token 		OPENING_BRACE CLOSING_BRACE ARITHMETIC_ADD DOLLAR COLON ORG END DW EQU  FWD NL 
 %token <name> 	IDENTIFIER
 %type  <value>	NUMBER_
 %type  <imm>	IMM
@@ -119,11 +119,16 @@ SYMB_V : IDENTIFIER COLON	{
 	push_inst(mkinst_label($1, PC, LINE));
 	mksym($1, PC, 1);}
      | EQU IDENTIFIER NUMBER_ 	{ mksym($2, $3, 1);}
+     | EQU IDENTIFIER IMM 	{ mksym($2, $3->value, 1);}
      | FWD IDENTIFIER 		{ mksym($2, 0,  0);}
      ;
 
 IMM : IDENTIFIER		{ $$ = mkimm( $1, 0);}
      | NUMBER_			{ $$ = mkimm( NULL, $1);}
+     | OPENING_BRACE IMM ARITHMETIC_ADD IMM CLOSING_BRACE	{
+	int A =  ($2->name == NULL) ? $2->value : get_symbole($2->name, table_sym);
+	int B =  ($4->name == NULL) ? $4->value : get_symbole($4->name, table_sym);
+	$$ = mkimm(NULL, A+B);}
      ;
 
 NUMBER_ : DOLLAR		{ $$ = PC;}

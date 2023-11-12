@@ -18,6 +18,23 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 {NL}		{ return NL;}
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
+"("		{ return OPENING_BRACE; }
+")"		{ return CLOSING_BRACE; }
+"+"		{ return ARITHMETIC_ADD; }
+"-"		{ return ARITHMETIC_SUB; }
+"*"		{ return ARITHMETIC_MUL; }
+"/"		{ return ARITHMETIC_DIV; }
+"%"		{ return ARITHMETIC_MOD; }
+"^"		{ return BOOLEAN_NOT; }
+"|"		{ return BOOLEAN_OR; }
+"&"		{ return BOOLEAN_AND; }
+">>"		{ return BOOLEAN_SRG; }
+"<<"		{ return BOOLEAN_SLF; }
+">>>"		{ return ARITHMETIC_SRG; }
+"UMIN"		{ return ARITHMETIC_MIN; }
+"UMAX"		{ return ARITHMETIC_MAX; }
+"SMIN"		{ return ARITHMETIC_SMI; }
+"SMAX"		{ return ARITHMETIC_SMA; }
 
 
 "NEVR"		{ yylval.value = 0x00; return CND3;}
