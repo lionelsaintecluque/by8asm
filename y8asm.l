@@ -67,6 +67,7 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 "OUT"		{ yylval.value = 0xD000; return INST9;}
 
 "OR"		{ yylval.value = 0x0000; return INST8;}
+"NOP"		{ yylval.value = 0x0000; return NOP_ALIAS;}
 "XOR"		{ yylval.value = 0x1000; return INST8;}
 "AND"		{ yylval.value = 0x2000; return INST8;}
 "ANDN"		{ yylval.value = 0x3000; return INST8;}
@@ -76,6 +77,8 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 "ADD"		{ yylval.value = 0x7000; return INST8;}
 "SET"		{ yylval.value = 0x8000; return INST8;}
 "CALL"		{ yylval.value = 0x9000; return INST8;}
+"OVL"		{ yylval.value = 0x9000; return OVL_ALIAS;}
+"HLT"		{ yylval.value = 0x9000; return HLT_ALIAS;}
 
 "SH" 		{ yylval.value = 0xA000; return INST4;}
 "SA"		{ yylval.value = 0xA080; return INST4;}
@@ -134,7 +137,7 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 		  return NUMBER;}
 
 
-[0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
+[-0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
 
 [a-z_][a-z0-9_]* { char* str_i = yytext;
 		  while (*str_i) {

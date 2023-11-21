@@ -37,8 +37,11 @@
 	struct immediate *imm;
 }
 
-%token <value> 	NUMBER CND3 CND4 REG INST9 INST8 INST4 INST_INV INST_PF
-%token 		OPENING_BRACE CLOSING_BRACE ARITHMETIC_ADD DOLLAR COLON ORG END DW EQU  FWD NL 
+%token <value> 	NUMBER CND3 CND4 REG OVL_ALIAS HLT_ALIAS NOP_ALIAS INST9 INST8 INST4 INST_INV INST_PF
+%token 		OPENING_BRACE CLOSING_BRACE DOLLAR COLON ORG END DW EQU  FWD NL 
+%token		ARITHMETIC_SUB ARITHMETIC_ADD ARITHMETIC_MUL ARITHMETIC_DIV ARITHMETIC_MOD 
+%token		ARITHMETIC_SRG ARITHMETIC_MIN ARITHMETIC_MAX ARITHMETIC_SMI ARITHMETIC_SMA
+%token		BOOLEAN_NOT BOOLEAN_OR BOOLEAN_AND BOOLEAN_SRG BOOLEAN_SLF
 %token <name> 	IDENTIFIER
 %type  <value>	NUMBER_
 %type  <imm>	IMM
@@ -57,7 +60,29 @@ PRG : %empty
 	LINE++;} 
      ;
 
-INST_V : INST9 IMM REG 		{ 
+INST_V : NOP_ALIAS { 
+	push_inst(mkinst_reg(OR_t, D1_t, D1_t, NEVR, 3, PC, LINE));
+	printf("NOP : INST8 REG REG CND3, %X, %X, %X, %X\n", OR_t, D1_t, D1_t, NEVR); }
+     | HLT_ALIAS {
+	push_inst(mkinst_imm($1, mkimm( NULL, 255), 8, PC_t, 8, PC, LINE));
+	printf("HLT : INST8 NUMBER REG, %X, %X, %X\n", $1, 255, PC_t); } 
+     | OVL_ALIAS IMM {
+	push_inst(mkinst_imm($1, $2, 8, PC_t, 8, PC, LINE));
+	printf("OVL : INST8 NUMBER REG, %X, %X, %X\n", $1, $2, PC_t); } 
+     | OVL_ALIAS IMM CND3 	{ 
+	push_inst(mkinst_imm($1, $2, 4, PC_t, $3, PC, LINE));
+	printf("OVL : INST8 NUMBER REG CND3, %X, %X, %X, %X\n", $1, $2, PC_t, $3); }
+     | OVL_ALIAS REG     	{ 
+	push_inst(mkinst_reg($1, $2, PC_t, 8, 3, PC, LINE));
+	printf("OVL : INST8 REG REG, %X, %X, %X\n", $1, $2, PC_t); }
+     | OVL_ALIAS REG CND3 	{ 
+	push_inst(mkinst_reg($1, $2, PC_t, $3, 3, PC, LINE));
+	printf("OVL : INST8 REG REG CND3, %X, %X, %X, %X\n", $1, $2, PC_t, $3); }
+     | OVL_ALIAS REG CND4 	{ 
+	push_inst(mkinst_reg($1, $2, PC_t, $3, 4, PC, LINE));
+	printf("OVL : INST8 REG REG CND4, %X, %X, %X, %X\n", $1, $2, PC_t, $3); }
+	
+     | INST9 IMM REG 		{ 
 	push_inst(mkinst_imm($1, $2, 9, $3, 8, PC, LINE)); 
 	if ($2->name == NULL) {
 		printf("INST9 NUMBER REG,  %X, %X,%X\n", $1, $2->value, $3); 
@@ -284,5 +309,5 @@ void push_inst( struct instruction* newinst){
 }
 
 void yyerror(const char* msg) {
-    fprintf(stderr, "%s\n", msg);
+    fprintf(stderr, "Line %d : %s\n", LINE, msg);
 }
