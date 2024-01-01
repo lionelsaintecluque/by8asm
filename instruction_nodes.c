@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "immediates.h"
 #include "instruction_nodes.h"
 
 const char* REG_l[] = {"D1", "A1", "D2", "A2", "R1", "R2", "R3", "PC"};
@@ -8,20 +9,6 @@ const char* REG_l[] = {"D1", "A1", "D2", "A2", "R1", "R2", "R3", "PC"};
 //"B1Z", "B2Z", "B3Z", "B0NZ", "B1NZ", "B2NZ", "B3NZ" };
 const char* CND_l[] = { "NEVR", "IFN0", "IFNC", "IFN1", "IFNS", "IFN2", "IFNZ", "IFN3", 
 "ALWS", "IF0", "IFC", "IF1", "IFS", "IF2", "IFZ", "IF3" };
-
-struct immediate* mkimm(char *name, int value) {
-	struct immediate *newimm = (struct immediate *)malloc(sizeof(struct immediate));
-
-	if (name == NULL) {
-		newimm->name = NULL;
-	} else {
-		char *newstr = (char *)malloc(strlen(name)+1);
-		strcpy(newstr, name);
-		newimm->name = newstr;
-	}
-	newimm->value = value;
-	return (newimm);
-}
 
 struct instruction* mkinst_instr(int opcode, struct immediate* immediate, int pc, int line) {
 	struct instruction *newinst = (struct instruction *)malloc(sizeof(struct instruction));

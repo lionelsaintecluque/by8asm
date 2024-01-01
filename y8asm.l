@@ -1,6 +1,16 @@
 %{
-    #include<stdio.h>
+/*
+ *	PROJECT : Bison - Flex - Y8 assembler
+ *	File : y8asm.l
+ *	Author : Lionel SAINTE CLUQUE
+ *	Licence : GPL V3
+ *
+ *	Lexer for Y8 assembly language parsing.
+ */
+    #include <stdio.h>
     #include <limits.h>
+    #include "immediates.h"
+    #include "instruction_nodes.h"
     #include "y8.tab.h"
 %}
 
@@ -18,23 +28,27 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 {NL}		{ return NL;}
 "$"		{ return DOLLAR; }
 ":"		{ return COLON; }
+
 "("		{ return OPENING_BRACE; }
 ")"		{ return CLOSING_BRACE; }
-"+"		{ return ARITHMETIC_ADD; }
-"-"		{ return ARITHMETIC_SUB; }
-"*"		{ return ARITHMETIC_MUL; }
-"/"		{ return ARITHMETIC_DIV; }
-"%"		{ return ARITHMETIC_MOD; }
-"^"		{ return BOOLEAN_NOT; }
-"|"		{ return BOOLEAN_OR; }
-"&"		{ return BOOLEAN_AND; }
-">>"		{ return BOOLEAN_SRG; }
-"<<"		{ return BOOLEAN_SLF; }
-">>>"		{ return ARITHMETIC_SRG; }
-"UMIN"		{ return ARITHMETIC_MIN; }
-"UMAX"		{ return ARITHMETIC_MAX; }
-"SMIN"		{ return ARITHMETIC_SMI; }
-"SMAX"		{ return ARITHMETIC_SMA; }
+
+"~"		{ yylval.value =  BOOLEAN_NOT; return UNARY_OP;}
+
+"+"		{ yylval.value =  ARITHMETIC_ADD; return BINARY_OP;}
+"-"		{ yylval.value =  ARITHMETIC_SUB; return BINARY_OP;}
+"*"		{ yylval.value =  ARITHMETIC_MUL; return BINARY_OP;}
+"/"		{ yylval.value =  ARITHMETIC_DIV; return BINARY_OP;}
+"%"		{ yylval.value =  ARITHMETIC_MOD; return BINARY_OP;}
+"^"		{ yylval.value =  BOOLEAN_XOR; return BINARY_OP;}
+"|"		{ yylval.value =  BOOLEAN_OR; return BINARY_OP;}
+"&"		{ yylval.value =  BOOLEAN_AND; return BINARY_OP;}
+">>"		{ yylval.value =  BOOLEAN_SRG; return BINARY_OP;}
+"<<"		{ yylval.value =  BOOLEAN_SLF; return BINARY_OP;}
+">>>"		{ yylval.value =  ARITHMETIC_SRG; return BINARY_OP;}
+"UMIN"		{ yylval.value =  ARITHMETIC_MIN; return BINARY_OP;}
+"UMAX"		{ yylval.value =  ARITHMETIC_MAX; return BINARY_OP;}
+"SMIN"		{ yylval.value =  ARITHMETIC_SMI; return BINARY_OP;}
+"SMAX"		{ yylval.value =  ARITHMETIC_SMA; return BINARY_OP;}
 
 
 "NEVR"		{ yylval.value = 0x00; return CND3;}
@@ -96,48 +110,102 @@ INST4 "LDCH"|"LDCL"|"RC"|"RO"|"SA"|"SH"
 ".EQU"		{ return EQU;}
 ".FWD"		{ return FWD;}
 
-[0-1]+"b"	{ char* str_i = yytext;
+[+-]?[0-1]+"b"	{ char* str_i = yytext;
 		  int val = 0;
-		  int i = 0;
+		  char i = 0;
+		  char sign = 0; // 0 : Positive number, 1 : negative number
+
+		  if ( *str_i == '+' || *str_i == '-'){
+			sign = ( *str_i == '-' ) ? 1 : 0;
+			str_i++;
+			} 
+
 		  while (*str_i) {
 			if (*str_i == 'b' || *str_i == 'B') break;
 
+
+			if ( 
+				//( sign == 0 && (val & (1<<31) ) != 0 ) ||
+				( val & (1<<30) ) != 0 
+			) printf ("Number overflow : %s\n", yytext);
+			
+
 			i = (*str_i >= '0' && *str_i <= '1') ? (*str_i - '0') : i;
-
-			if ( (val & (INT_MIN)) != 0 ) {
-				printf ("Number overflow : %s\n", yytext);
-			}
-
-        		str_i++;
 			val = (val<<1) | i;
-		  }	
+        		str_i++;
+		  }
+		
+		  val = (sign == 0) ? val : -1 * val; 
+
 		  yylval.value = val;
 		  return NUMBER;}
 
 
-[0-9a-f]+"h"	{ char* str_i = yytext;
+[+-]?[0-9a-f]+"h" { char* str_i = yytext;
 		  int val = 0;
-		  int i = 0;
+		  char i = 0;
+		  char sign = 0;
+
+		  if ( *str_i == '+' || *str_i == '-'){
+			sign = ( *str_i == '-' ) ? 1 : 0;
+			str_i++;
+			} 
+
 		  while (*str_i) {
 			if (*str_i == 'h' || *str_i == 'H') break;
+
+			if ( 
+				//( sign == 0 && (val & 0xF0000000) != 0 ) ||
+				( val & 0xF8000000 ) != 0 
+			) {
+				printf ("Number overflow : %s\n", yytext);
+			}
 
 			i = (*str_i >= '0' && *str_i <= '9') ? (*str_i - '0') : i;
 			i = (*str_i >= 'a' && *str_i <= 'f') ? 10 + (*str_i - 'a') : i;
 			i = (*str_i >= 'A' && *str_i <= 'F') ? 10 + (*str_i - 'A') : i;
-
-
-			if ( (val & (INT_MIN | INT_MIN >> 1 | INT_MIN >> 2 | INT_MIN >> 3)) != 0 ) {
-				printf ("Number overflow : %s\n", yytext);
-			}
+			val = (val<<4) | i;
 
         		str_i++;
-			val = (val<<4) | i;
-		  }	
+		  }
+
+		  val = (sign == 0) ? val : -1 * val; 
+
 		  yylval.value = val;
 		  return NUMBER;}
 
 
-[-0-9]+		{ yylval.value = atoi(yytext); return NUMBER;}
+[+-]?[0-9]+	{ char* str_i = yytext;
+		  int val = 0;
+		  char i = 0;
+		  char sign = 0;
+
+		  if ( *str_i == '+' || *str_i == '-'){
+			sign = ( *str_i == '-' ) ? 1 : 0;
+			str_i++;
+			} 
+
+		  while (*str_i) {
+			if (*str_i == 0 ) break;
+
+			i = (*str_i >= '0' && *str_i <= '9') ? (*str_i - '0') : i;
+			val = 10 * val ;
+			if ( 
+				//( (sign == 0) && 0xFFFFFFFF - val < i ) ||
+				0x7FFFFFFF - val < i 
+			) {
+				printf ("Number overflow : %s\n", yytext);
+			}
+
+			val = val + i;
+
+        		str_i++;
+		  }
+
+		  val = (sign == 0) ? val : -1 * val; 
+
+		  yylval.value = val;
+		  return NUMBER;}
 
 [a-z_][a-z0-9_]* { char* str_i = yytext;
 		  while (*str_i) {

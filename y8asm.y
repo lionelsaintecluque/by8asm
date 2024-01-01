@@ -1,9 +1,26 @@
 %{  
+/*
+ *	PROJECT : Bison - Flex - Y8 assembler
+ *	File : y8asm.y
+ *	Author : Lionel SAINTE CLUQUE
+ *	Licence : GPL V3
+ *
+ *	Grammar for Y8 assembly language parsing.
+ *	Designed with bison 3.8.2
+ *	Converts assembly code to chained lists : 
+ *		Instructions : List of instruction to be assembled in a program. 
+ *		Symbols : list of keywords defined by the author of the assembly code to refer to numerical values. 
+ */
     #include <stdio.h>
     #include <string.h>
     #include "instruction_nodes.h"
+    #include "immediates.h"
+    #include "symbols.h"
+    
     int PC = 0;
     int LINE = 1;
+
+    struct symbole* table_sym = NULL;
 
     void push_inst(struct instruction *newinst);
     struct instruction *table_instructions = NULL;
@@ -14,18 +31,7 @@
     int yywrap();
 
 
-    struct symbole* mksym(char *name, int value, char initialized);
-    struct symbole *table_sym = NULL;
-    struct symbole {
-    	char *name;
-    	int value;
-	char initialized;
-	char line;
-    	int count;
-	struct symbole *next;
-    };
     void update_immediates(struct instruction *program, struct symbole *symbols);
-    int get_symbole (char *name, struct symbole *sym_table);
 %}
 
 %union {
@@ -39,9 +45,7 @@
 
 %token <value> 	NUMBER CND3 CND4 REG OVL_ALIAS HLT_ALIAS NOP_ALIAS INST9 INST8 INST4 INST_INV INST_PF
 %token 		OPENING_BRACE CLOSING_BRACE DOLLAR COLON ORG END DW EQU  FWD NL 
-%token		ARITHMETIC_SUB ARITHMETIC_ADD ARITHMETIC_MUL ARITHMETIC_DIV ARITHMETIC_MOD 
-%token		ARITHMETIC_SRG ARITHMETIC_MIN ARITHMETIC_MAX ARITHMETIC_SMI ARITHMETIC_SMA
-%token		BOOLEAN_NOT BOOLEAN_OR BOOLEAN_AND BOOLEAN_SRG BOOLEAN_SLF
+%token	<value>	BINARY_OP UNARY_OP
 %token <name> 	IDENTIFIER
 %type  <value>	NUMBER_
 %type  <imm>	IMM
@@ -142,19 +146,20 @@ INST_V : NOP_ALIAS {
 
 SYMB_V : IDENTIFIER COLON	{ 
 	push_inst(mkinst_label($1, PC, LINE));
-	mksym($1, PC, 1);}
-     | EQU IDENTIFIER NUMBER_ 	{ mksym($2, $3, 1);}
-     | EQU IDENTIFIER IMM 	{ mksym($2, $3->value, 1);}
-     | FWD IDENTIFIER 		{ mksym($2, 0,  0);}
+	mksym($1, PC, 1, LINE, &table_sym);}
+     //| EQU IDENTIFIER NUMBER_ 	{ mksym($2, $3, 1, LINE, &table_sym);}
+     | EQU IDENTIFIER IMM 	{ mksym($2, $3->value, 1, LINE, &table_sym);}
+     | FWD IDENTIFIER 		{ mksym($2, 0,  0, LINE, &table_sym);}
      ;
 
 IMM : IDENTIFIER		{ $$ = mkimm( $1, 0);}
      | NUMBER_			{ $$ = mkimm( NULL, $1);}
-     | OPENING_BRACE IMM ARITHMETIC_ADD IMM CLOSING_BRACE	{
-	int A =  ($2->name == NULL) ? $2->value : get_symbole($2->name, table_sym);
-	int B =  ($4->name == NULL) ? $4->value : get_symbole($4->name, table_sym);
-	$$ = mkimm(NULL, A+B);}
-     ;
+     | OPENING_BRACE IMM BINARY_OP IMM CLOSING_BRACE	{
+	$$ = immediate_binary_compute($2, $4, $3, table_sym);
+	if ($$ == NULL) {
+		YYABORT;
+		};
+	};
 
 NUMBER_ : DOLLAR		{ $$ = PC;}
      | NUMBER			{ $$ = $1;}
@@ -232,59 +237,7 @@ int main(){
 
 }
 
-struct symbole* mksym(char *name, int value, char initialized) {
-	struct symbole *newsym = (struct symbole *)malloc(sizeof(struct symbole));
-	char *newstr = (char *)malloc(strlen(name)+1);
-	
-	struct symbole *sym_i = table_sym;
-	struct symbole *lastsym = table_sym;
 
-	while (sym_i != NULL) {
-		if ( !strcmp(name, sym_i->name) ) {
-			printf ("Warning: symbol redefined : %s %Xh -> %Xh\n", name, sym_i->value, value) ;
-			sym_i->value = value;
-			return (sym_i);
-		}
-		lastsym = sym_i;
-		sym_i = sym_i->next;
-		
-	}
-	
-	strcpy(newstr, name);
-	newsym->name = newstr;
-	newsym->value = value;
-	newsym->initialized = initialized;
-	newsym->count = 0;
-	newsym->line = LINE;
-	newsym->next = NULL;
-	if (lastsym == NULL) {
-		table_sym = newsym;
-	} else {
-		lastsym->next = newsym;
-	}
-	return (newsym);
-}
-
-int get_symbole (char *name, struct symbole *sym_table) {
-	if ( name != NULL ) {
-		struct symbole* sym_i = sym_table;
-		while (sym_i != NULL && 
-		       strcmp(name, sym_i-> name) ) {
-			sym_i = sym_i->next;
-		}
-		if (sym_i != NULL) {
-			printf ("For %s, found %d<%s>\n", name, sym_i->value, sym_i->name);
-			sym_i->count++;
-			return sym_i->value;
-		} else { 
-			printf("Symbol %s not found in Symbol Table\n", name);
-		}
-	}
-	printf ("Error : get_symbole called on undefined symbol name.\n");
-
-	return 0;
-	
-}
 
 void update_immediates(struct instruction *program, struct symbole *symbols) {
 	struct instruction* inst_i = program;

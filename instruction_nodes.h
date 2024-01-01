@@ -1,15 +1,20 @@
-struct immediate* mkimm(char *name, int value);
-struct immediate {
-	char *name;
-	int value;
-};
+/*
+ *	PROJECT : Bison - Flex - Y8 assembler
+ *	File : instruction_nodes.h
+ *	Author : Lionel SAINTE CLUQUE
+ *	Licence : GPL V3
+ *
+ *	Header files for C code implementing Instructions
+ * 	
+ *	Instructions are placed in a chained list.
+ *	This file implements constructors and output functions as binary and text.
+ */
 
 #define ORG_t 0
 #define INS_t 1
 #define DW_t 2
 #define BL_t 3
 #define BH_t 4
-struct instruction* mkinst_instr(int opcode, struct immediate* immediate, int pc, int line);
 struct instruction {
 	char *label;
 	int opcode;
@@ -21,6 +26,7 @@ struct instruction {
 	struct instruction* next;
 };
 
+struct instruction* mkinst_instr(int opcode, struct immediate* immediate, int pc, int line);
 struct instruction* mkinst_imm(int instruction, struct immediate* imm, char imm_s, int snd, int cnd, int PC, int line);
 void add_immediate (struct instruction* inst);
 struct instruction* mkinst_reg(int instruction, int sri, int snd, int cnd, char cnd_s, int PC, int line);
